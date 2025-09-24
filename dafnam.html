@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Daftar Nama</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      width: 100%;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Splash screen */
+    #splash {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(135deg, #5cb8ff, #34d399);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 9999;
+      color: #fff;
+    }
+    #splash h1 { font-size: 2rem; margin-bottom: 20px; }
+    #splash button {
+      padding: 14px 30px;
+      background: #fff;
+      color: #333;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 5px;
+    }
+    #splash button:hover { transform: scale(1.05); background: #e2e8f0; }
+
+    /* Container utama */
+    .container {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      max-width: 1200px;
+      margin: auto;
+      padding: 0;
+      width: 100%;
+      overflow: hidden;
+      background: #f0f4ff;
+    }
+
+    /* Bagian Pencarian */
+    .search-bar-container {
+      background: #e6f3ff;
+      padding: 12px;
+      border-bottom: 2px solid #cbd5e0;
+    }
+    .search-bar-container input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: #fff;
+    }
+
+    /* Bagian Input Data */
+    .form-section {
+      background: #ffffff;
+      padding: 18px;
+      border-bottom: 2px solid #e2e8f0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .form-section form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      align-items: center;
+    }
+    .form-section input, .form-section select {
+      padding: 12px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .form-buttons {
+      grid-column: 1 / -1; /* Make button container span full width */
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 10px;
+    }
+    .form-buttons button {
+      height: 50px;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      color: white;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    /* Mengembalikan warna tombol seperti semula dan menambah yg baru */
+    #btn-tambah { background: linear-gradient(90deg, #5cb8ff, #34d399); }
+    #btn-jumlah { background: linear-gradient(90deg, #ff9f43, #ff6b6b); }
+    #btn-edit { background: #6366f1; }
+    #btn-edit:disabled { background: #a5b4fc; cursor: not-allowed; }
+    #btn-sort { background: #a855f7; }
+    #btn-batal-edit { background: #78716c; }
+    .form-buttons button:hover { opacity: 0.9; }
+
+    /* Daftar nama */
+    .list-container {
+      flex: 1;
+      overflow-y: auto;
+      background: #f9fafb;
+      padding: 10px;
+    }
+    .card {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-left: 6px solid #5cb8ff;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .card.selected {
+      border-left-color: #f59e0b;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    }
+    .card:hover { transform: translateY(-2px); }
+    .card-header {
+      font-weight: bold;
+      font-size: 1rem;
+      color: #2d3748;
+      margin-bottom: 5px;
+    }
+    .card p { font-size: 0.9rem; color: #444; margin-bottom: 4px; }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .btn-card {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: 0.3s;
+    }
+    .btn-hapus { background: #f87171; color: white; }
+    .btn-hapus:hover { background: #dc2626; }
+    .btn-aksi { background: #34d399; color: white; }
+    .btn-aksi:hover { background: #059669; }
+
+    /* Modal Styles */
+    #modal, #modal-jumlah, #modal-sort {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .modal-content textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .modal-actions button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+    .btn-cancel { background: #e5e7eb; }
+    .btn-save { background: #34d399; color: white; }
+    .btn-save:hover { background: #059669; }
+    
+    /* Sort Modal Specific Styles */
+    .sort-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 20px 0;
+    }
+    .sort-options button {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #f9fafb;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    .sort-options button:hover {
+        background: #e5e7eb;
+    }
+    .reset-sort-btn {
+        width: 100%;
+        background: #f87171;
+        color: white;
+        margin-bottom: 15px;
+    }
+
+    /* Highlight pencarian */
+    mark {
+      background: #fff59d;
+      padding: 0 2px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="splash">
+    <h1>Selamat Datang</h1>
+    <button onclick="buatDatabaseBaru()">Buat Database Baru</button>
+    <button onclick="pilihDatabaseLama()">Pilih Database Lama</button>
+  </div>
+
+  <div class="container" id="app-container">
+    <h1 style="text-align:center; margin: 12px 0;">搭 Daftar Nama</h1>
+
+    <div class="search-bar-container">
+      <input type="text" id="search" placeholder="剥 Cari nama, alamat, hp, keterangan, catatan...">
+    </div>
+
+    <div class="form-section">
+      <form id="form-input-nama">
+        <input type="text" id="input-nama" placeholder="Nama" required>
+        <input type="text" id="input-alamat" placeholder="Alamat" required>
+        <input type="text" id="input-hp" placeholder="No. HP" required>
+        <select id="input-keterangan" required>
+          <option value="" disabled selected>Keterangan</option>
+          <option>Keluarga</option>
+          <option>Tetangga</option>
+          <option>Teman Dekat</option>
+          <option>Relasi</option>
+          <option>Lain-lain</option>
+        </select>
+        <div class="form-buttons">
+          <button type="submit" id="btn-tambah">Tambah</button>
+          <button type="button" id="btn-jumlah" onclick="tampilkanJumlah()">Jumlah</button>
+          <button type="button" id="btn-edit" onclick="aktifkanModeEdit()" disabled>Edit</button>
+          <button type="button" id="btn-sort" onclick="bukaModalSort()">Urutkan</button>
+          <button type="button" id="btn-batal-edit" onclick="batalEdit()" style="display: none;">Batal</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="list-container" id="card-container"></div>
+  </div>
+
+  <div id="modal">
+    <div class="modal-content">
+      <h3 id="modal-title">Catatan Aksi</h3>
+      <textarea id="aksi-textarea" placeholder="Tulis catatan di sini..."></textarea>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="tutupModal()">Batal</button>
+        <button class="btn-save" onclick="simpanAksi()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-jumlah">
+    <div class="modal-content">
+      <h3>Total Data</h3>
+      <p id="jumlah-text" style="margin: 15px 0; font-weight: bold; font-size: 1rem;"></p>
+      <div class="modal-actions" style="justify-content: center;">
+        <button class="btn-save" onclick="tutupModalJumlah()">Tutup</button>
+      </div>
+    </div>
+  </div>
+  
+  <div id="modal-sort">
+    <div class="modal-content">
+        <h3>Urutkan & Filter</h3>
+        <div class="sort-options">
+            <button onclick="urutkanData('a-z')">Nama A-Z</button>
+            <button onclick="urutkanData('z-a')">Nama Z-A</button>
+            <button onclick="filterData('Keluarga')">Keluarga</button>
+            <button onclick="filterData('Tetangga')">Tetangga</button>
+            <button onclick="filterData('Teman Dekat')">Teman Dekat</button>
+            <button onclick="filterData('Relasi')">Relasi</button>
+            <button onclick="filterData('Lain-lain')">Lain-lain</button>
+            <button onclick="filterData('')" class="reset-sort-btn">Tampilkan Semua</button>
+        </div>
+        <div class="modal-actions" style="justify-content: center;">
+            <button class="btn-cancel" onclick="tutupModalSort()">Tutup</button>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    let fileHandle = null;
+    let data = [];
+    let selectedIndex = null; // Untuk modal Aksi
+    let editIndex = null; // Untuk mode Edit
+    let currentCategoryFilter = ''; // Untuk filter
+
+    const splash = document.getElementById('splash');
+    const appContainer = document.getElementById('app-container');
+    const form = document.getElementById('form-input-nama');
+    const cardContainer = document.getElementById('card-container');
+    const searchInput = document.getElementById('search');
+    const modal = document.getElementById('modal');
+    const modalJumlah = document.getElementById('modal-jumlah');
+    const modalSort = document.getElementById('modal-sort'); // Modal baru
+    const jumlahText = document.getElementById('jumlah-text');
+    const aksiTextarea = document.getElementById('aksi-textarea');
+    
+    // Tombol baru
+    const btnEdit = document.getElementById('btn-edit');
+    const btnTambah = document.getElementById('btn-tambah');
+    const btnBatalEdit = document.getElementById('btn-batal-edit');
+
+    /* --------- FULLSCREEN ----------- */
+    function masukFullscreen() {
+      const elem = document.documentElement;
+      if (!document.fullscreenElement) {
+        if (elem.requestFullscreen) elem.requestFullscreen().catch(err => console.log(err));
+      }
+    }
+
+    /* --------- DATABASE FILE (TIDAK DIUBAH SAMA SEKALI) -------- */
+    async function buatDatabaseBaru() {
+      masukFullscreen();
+      try {
+        fileHandle = await window.showSaveFilePicker({
+          suggestedName: 'daftar_nama.json',
+          types: [{ description: 'File JSON', accept: { 'application/json': ['.json'] } }],
+        });
+        data = [];
+        await simpanKeFile();
+        splash.style.display = 'none';
+        appContainer.style.display = 'flex';
+        renderCards();
+      } catch (err) {
+        console.error("Gagal membuat database baru:", err);
+      }
+    }
+
+    async function pilihDatabaseLama() {
+      masukFullscreen();
+      try {
+        [fileHandle] = await window.showOpenFilePicker({
+          types: [{ description: 'File JSON', accept: { 'application/json': ['.json'] } }],
+          excludeAcceptAllOption: true,
+          multiple: false,
+        });
+        await bacaDariFile();
+        splash.style.display = 'none';
+        appContainer.style.display = 'flex';
+        renderCards();
+      } catch (err) {
+        console.error("Gagal membuka database lama:", err);
+      }
+    }
+
+    async function simpanKeFile() {
+      if (!fileHandle) return;
+      try {
+        const writable = await fileHandle.createWritable();
+        await writable.write(JSON.stringify(data, null, 2));
+        await writable.close();
+      } catch (err) {
+        console.error("Gagal menyimpan file:", err);
+      }
+    }
+
+    async function bacaDariFile() {
+      if (!fileHandle) return;
+      try {
+        const file = await fileHandle.getFile();
+        const text = await file.text();
+        data = JSON.parse(text) || [];
+      } catch {
+        data = [];
+      }
+    }
+
+    /* --------- RENDERING ----------- */
+    function highlight(text, keyword) {
+      if (!keyword) return text;
+      const regex = new RegExp(`(${keyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')})`, 'gi');
+      return text.replace(regex, '<mark>$1</mark>');
+    }
+
+    function renderCards() {
+      cardContainer.innerHTML = '';
+      const searchFilter = searchInput.value.toLowerCase();
+
+      const filteredData = data.filter(item => {
+        const matchesCategory = !currentCategoryFilter || item.keterangan === currentCategoryFilter;
+        const matchesSearch = !searchFilter || (
+            item.nama.toLowerCase().includes(searchFilter) ||
+            item.alamat.toLowerCase().includes(searchFilter) ||
+            item.hp.toLowerCase().includes(searchFilter) ||
+            item.keterangan.toLowerCase().includes(searchFilter) ||
+            (item.aksi && item.aksi.toLowerCase().includes(searchFilter))
+        );
+        return matchesCategory && matchesSearch;
+      });
+
+      filteredData.forEach(item => {
+        const originalIndex = data.indexOf(item);
+        const card = document.createElement('div');
+        card.className = `card ${editIndex === originalIndex ? 'selected' : ''}`;
+        card.setAttribute('onclick', `pilihUntukEdit(${originalIndex})`);
+
+        card.innerHTML = `
+            <div class="card-header">側 ${highlight(item.nama, searchFilter)}</div>
+            <p>桃 ${highlight(item.alamat, searchFilter)}</p>
+            <p>到 ${highlight(item.hp, searchFilter)}</p>
+            <p>統 ${highlight(item.keterangan, searchFilter)}</p>
+            <p><strong>Catatan:</strong> ${highlight(item.aksi || 'Belum ada catatan', searchFilter)}</p>
+            <div class="btn-group">
+                <button class="btn-card btn-aksi" onclick="event.stopPropagation(); bukaModal(${originalIndex})">Aksi</button>
+                <button class="btn-card btn-hapus" onclick="event.stopPropagation(); hapusData(${originalIndex})">Hapus</button>
+            </div>
+        `;
+        cardContainer.appendChild(card);
+      });
+    }
+
+    /* --------- FUNGSI TAMBAH DATA (TIDAK DIUBAH) & EDIT DATA (BARU) ---------- */
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      masukFullscreen();
+      const nama = document.getElementById('input-nama').value.trim();
+      const alamat = document.getElementById('input-alamat').value.trim();
+      const hp = document.getElementById('input-hp').value.trim();
+      const keterangan = document.getElementById('input-keterangan').value;
+
+      if (!nama || !alamat || !hp || !keterangan) return;
+      
+      if (editIndex !== null) { // Logika baru untuk mode edit
+        data[editIndex] = { ...data[editIndex], nama, alamat, hp, keterangan };
+      } else { // Logika lama untuk tambah data
+        data.push({ nama, alamat, hp, keterangan, aksi: "" });
+      }
+
+      await simpanKeFile(); // Tetap memanggil fungsi simpan yang sama
+      batalEdit(); // Reset form dan state
+      renderCards();
+    });
+    
+    // Fungsi baru untuk alur edit
+    function pilihUntukEdit(index) {
+        editIndex = index;
+        btnEdit.disabled = false;
+        renderCards();
+    }
+
+    function aktifkanModeEdit() {
+        if (editIndex === null) return;
+        masukFullscreen();
+        
+        const item = data[editIndex];
+        document.getElementById('input-nama').value = item.nama;
+        document.getElementById('input-alamat').value = item.alamat;
+        document.getElementById('input-hp').value = item.hp;
+        document.getElementById('input-keterangan').value = item.keterangan;
+
+        btnTambah.textContent = "Simpan";
+        btnBatalEdit.style.display = 'block';
+    }
+
+    function batalEdit() {
+        editIndex = null;
+        form.reset();
+        btnTambah.textContent = "Tambah";
+        btnEdit.disabled = true;
+        btnBatalEdit.style.display = 'none';
+        renderCards();
+    }
+
+    /* --------- FUNGSI HAPUS DATA (TIDAK DIUBAH) ---------- */
+    async function hapusData(index) {
+      masukFullscreen();
+      if (confirm("Yakin ingin menghapus data ini?")) {
+        data.splice(index, 1);
+        await simpanKeFile();
+        batalEdit();
+        renderCards();
+      }
+    }
+
+    /* --------- MODAL AKSI (TIDAK DIUBAH) ---------- */
+    function bukaModal(index) {
+      masukFullscreen();
+      selectedIndex = index;
+      aksiTextarea.value = data[index].aksi || "";
+      modal.style.display = 'flex';
+    }
+
+    function tutupModal() {
+      modal.style.display = 'none';
+      aksiTextarea.value = "";
+      selectedIndex = null;
+    }
+
+    async function simpanAksi() {
+      masukFullscreen();
+      if (selectedIndex === null) return;
+      data[selectedIndex].aksi = aksiTextarea.value.trim();
+      await simpanKeFile();
+      renderCards();
+      tutupModal();
+    }
+
+    /* --------- MODAL JUMLAH (HANYA SEDIKIT PENYESUAIAN TEKS) --------- */
+    function tampilkanJumlah() {
+      masukFullscreen();
+      const totalData = data.length;
+      const filteredData = cardContainer.children.length;
+
+      if (currentCategoryFilter || searchInput.value) {
+          jumlahText.innerHTML = `Menampilkan ${filteredData} dari total ${totalData} data.`;
+      } else {
+          jumlahText.textContent = `Jumlah nama yang berhasil ditulis adalah ${totalData}.`;
+      }
+      modalJumlah.style.display = 'flex';
+    }
+
+    function tutupModalJumlah() {
+      modalJumlah.style.display = 'none';
+    }
+
+    /* --------- FUNGSI SORT & FILTER (BARU) --------- */
+    function bukaModalSort() {
+      masukFullscreen();
+      modalSort.style.display = 'flex';
+    }
+
+    function tutupModalSort() {
+      modalSort.style.display = 'none';
+    }
+
+    function urutkanData(kriteria) {
+        if (kriteria === 'a-z') {
+            data.sort((a, b) => a.nama.localeCompare(b.nama));
+        } else if (kriteria === 'z-a') {
+            data.sort((a, b) => b.nama.localeCompare(a.nama));
+        }
+        renderCards();
+        tutupModalSort();
+    }
+
+    function filterData(kategori) {
+        currentCategoryFilter = kategori;
+        renderCards();
+        tutupModalSort();
+    }
+
+    /* --------- EVENT TAMBAHAN (TIDAK DIUBAH) -------- */
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) tutupModal();
+      if (e.target === modalJumlah) tutupModalJumlah();
+      if (e.target === modalSort) tutupModalSort();
+    });
+
+    searchInput.addEventListener('input', () => {
+      renderCards();
+    });
+  </script>
+</body>
+</html>
