@@ -14,7 +14,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      background: #f8fafc; /* Warna background utama lebih lembut */
+      background: #f8fafc;
     }
 
     /* Splash screen */
@@ -34,7 +34,7 @@
         font-size: 2.2rem;
         margin-bottom: 20px;
         font-weight: 700;
-        text-align: center; /* PERBAIKAN: Menambahkan ini agar judul presisi di tengah */
+        text-align: center;
     }
     #splash button {
       padding: 14px 30px;
@@ -114,12 +114,13 @@
     .form-buttons {
       grid-column: 1 / -1;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      /* PERBAIKAN: Mengubah grid agar tombol menjadi 1 baris yang rapi */
+      grid-template-columns: repeat(4, 1fr);
       gap: 10px;
     }
     .form-buttons button {
-      height: 50px;
-      font-size: 1rem;
+      height: 48px; /* Sedikit mengurangi tinggi tombol */
+      font-size: 0.9rem; /* Sedikit mengurangi font tombol */
       font-weight: 600;
       border: none;
       color: white;
@@ -136,7 +137,7 @@
     #btn-edit { background: #8b5cf6; }
     #btn-edit:disabled { background: #c4b5fd; cursor: not-allowed; transform: none; }
     #btn-sort { background: #d946ef; }
-    #btn-batal-edit { background: #475569; }
+    #btn-batal-edit { background: #475569; grid-column: 1 / -1; } /* Pastikan tombol batal tetap full width jika muncul */
 
     /* Daftar nama */
     .list-container {
